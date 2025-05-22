@@ -1,14 +1,28 @@
 exports.estimateTax = (req, res) => {
   const { productValue, shippingCost, category } = req.body;
 
-  if (!productValue || !shippingCost || !category) {
-    return res.status(400).json({ error: 'Todos os campos são obrigatórios: productValue, shippingCost e category.' });
+  if (
+    typeof productValue !== 'number' ||
+    typeof shippingCost !== 'number' ||
+    typeof category !== 'string'
+  ) {
+    return res.status(400).json({ error: 'Dados inválidos.' });
   }
 
-  // Exemplo de cálculo de imposto padrão
-  let taxRate = 0.6; // 60% padrão
-  if (category === 'roupas') taxRate = 0.35;
-  if (category === 'livros') taxRate = 0; // isento
+  const taxRates = {
+    livros: 0,
+    roupas: 0.35,
+    eletronicos: 0.6,
+    suplementos: 0.2,
+    outros: 0.5,
+  };
+
+  const categoryKey = category.toLowerCase();
+  const taxRate = taxRates[categoryKey];
+
+  if (taxRate === undefined) {
+    return res.status(400).json({ error: 'Categoria inválida.' });
+  }
 
   const estimatedTax = (productValue + shippingCost) * taxRate;
   const totalCost = productValue + shippingCost + estimatedTax;
@@ -18,6 +32,6 @@ exports.estimateTax = (req, res) => {
     shippingCost,
     estimatedTax: parseFloat(estimatedTax.toFixed(2)),
     totalCost: parseFloat(totalCost.toFixed(2)),
-    notes: 'Este cálculo é uma estimativa. Impostos reais podem variar.'
+    notes: 'Este cálculo é uma estimativa. Impostos reais podem variar.',
   });
 };
